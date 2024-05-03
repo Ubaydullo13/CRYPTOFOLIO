@@ -17,7 +17,7 @@ export function currencyType(type) {
 }
 
 export const radioButtons = [
-  { id: "option1", label: "24 Hours", value: "1" },
+  { id: "option1", label: "24 Hours", value: "24" },
   { id: "option2", label: "30 Days", value: "30" },
   { id: "option3", label: "3 Month", value: "90" },
   { id: "option4", label: "1 Year", value: "365" },
