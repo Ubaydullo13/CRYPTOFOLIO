@@ -2,12 +2,10 @@ import styled from "@emotion/styled";
 import { Container, formatNumber, currencyType } from "../../utils";
 import viewed from "../../assets/images/viewed.svg";
 import unviewed from "../../assets/images/unviewed.svg";
-import { Pagination, Stack, PaginationItem } from "@mui/material";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { DataContext } from "../../context/DataContext";
 import { useNavigate } from "react-router-dom";
-import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
-
+import { Pagination, Stack, PaginationItem} from "@mui/material";
 
 const Wrapper = styled.div`
   padding: 0px 24px;
@@ -145,7 +143,6 @@ const TablePercents = styled.div`
     text-align: right;
   }
 `;
-
 const Footer = styled.div`
   display: flex;
   justify-content: center;
@@ -153,43 +150,63 @@ const Footer = styled.div`
 `;
 
 const PaginationS = styled(PaginationItem)`
-    color: #ffffff;
-    && {
-        background-color: ${(props) =>
-          props.selected ? "#3A3B3F" : "inherit"};
-    }`;
+  color: #ffffff;
+  && {
+    background-color: ${(props) => {
+      let page = 1;
+      if (localStorage.getItem("page")) {
+        page = localStorage.getItem("page");
+      }
+
+      if (page == props.page) {
+        props.selected = true;
+      } else {
+        props.selected = false;
+      }
+      return props.selected ? "#3A3B3F" : "inherit";
+    }};
+  }
+`;
 
 function Table({ data, fetchData }) {
-  const products = data
+  const products = data;
   const navigate = useNavigate();
   const [type, setType, watch, setWatch] = useContext(DataContext);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(null);
+  console.log("page", page);
   let storedData = watch;
-console.log(page);
   function handleNavigate(elID, el) {
-      if(elID) {
-        const isExist = storedData.some((item) => item.id === elID);
-        if(isExist) {
-          navigate(`crypto/${elID}`)
-          return;
-        }
-
-        const updatedData = [...storedData, el];
-        localStorage.setItem("watchList", JSON.stringify(updatedData));
-        setWatch(updatedData);
-        navigate(`crypto/${elID}`)
+    if (elID) {
+      const isExist = storedData.some((item) => item.id === elID);
+      if (isExist) {
+        navigate(`crypto/${elID}`);
+        return;
       }
+
+      const updatedData = [...storedData, el];
+      localStorage.setItem("watchList", JSON.stringify(updatedData));
+      setWatch(updatedData);
+      navigate(`crypto/${elID}`);
+    }
   }
 
+  useEffect(() => {
+    if (localStorage.getItem("page")) {
+      console.log(localStorage.getItem("page"));
+      setPage(localStorage.getItem("page"));
+    } else {
+      setPage(1);
+    }
+  }, []);
+
   function handleChange(event, value) {
+    console.log(206, value);
     setPage(value);
+    localStorage.setItem("page", value);
     fetchData(value);
     window.scrollTo(0, 350);
   }
-
-
-
   return (
     <>
       <Container>
@@ -198,84 +215,101 @@ console.log(page);
           <Search
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              e.preventDefault();
+              setSearch(e.target.value);
+            }}
             placeholder="Search For a Crypto Currency.."
           />
-                <TableWrapper>
-                    <Thead>
-                        <tr>
-                            <TableHead>Coin</TableHead>
-                            <TableHead>Price</TableHead>
-                            <TableHead>24h Changes</TableHead>
-                            <TableHead>Market Cap</TableHead>
-                        </tr>
-                    </Thead>
-                    <tbody>
-                        {
-                            products && products.length > 0 &&
-                            products.filter((product) => 
-                        product.name.toLowerCase().includes(search.toLowerCase())
-                    )
-                    .map((product, index) => {
-                        let percents = Number(product.price_change_percentage_24h).toFixed(2);
-                        const isExist = storedData.some((item) => item.id === product.id);
-                        return (
-                            <TableRow 
-                            key={index}
-                            onClick={() => {
-                              handleNavigate(product.id, product)
-                            }}>
-                             <TableData>
-                                <TableInfo>
-                                    <img src={product.image} alt={product.name} width={50} />
-                                     <div>
-                                        <h3>{product.symbol}</h3>
-                                        <p>{product.name}</p>
-                                    </div>
-                                </TableInfo>
-                                </TableData> 
-                                <TablePrice>
-                                  {currencyType(type)} {formatNumber(product.current_price.toFixed(2))}
-                                </TablePrice>
-                                <td>
-                                    <TablePercents>
-                                    <img src={isExist ? viewed : unviewed}
-                                         width={27}
-                                         onClick={() => {
-                                            navigate(`/crypto/${product.id}`);
-                                         }}/>
-                                         <p>
-                                             {percents > 0? (
-                                                 <p style={{ color: "#0ECB81" }}>+{percents}%</p>
-                                             ) : (
-                                                 <p style={{ color: "#ff0000" }}>{percents}%</p>
-                                             )}
-                                         </p>
-                                    </TablePercents>
-                                </td>
-                                <TablePrice>
-                                     {currencyType(type)} {formatNumber(product.market_cap.toString().slice(0, -6))}M
-                                </TablePrice>
-                            </TableRow>
-                        )
-                    })
-                        }
-                    </tbody>
-                </TableWrapper>
-          <Footer>
-                <Stack spacing={2}>
-                    <Pagination count={10} page={page} onChange={handleChange}
-                          renderItem={(item) => (
-                            <PaginationS 
-                              slots={{
-                                previous: ArrowBackIos,
-                                next: ArrowForwardIos,
+          <TableWrapper>
+            <Thead>
+              <tr>
+                <TableHead>Coin</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>24h Changes</TableHead>
+                <TableHead>Market Cap</TableHead>
+              </tr>
+            </Thead>
+            <tbody>
+              {products &&
+                products.length > 0 &&
+                products
+                  .filter((product) =>
+                    product.name.toLowerCase().includes(search.toLowerCase())
+                  )
+                  .map((product, index) => {
+                    let percents = Number(
+                      product.price_change_percentage_24h
+                    ).toFixed(2);
+                    const isExist = storedData.some(
+                      (item) => item.id === product.id
+                    );
+                    return (
+                      <TableRow
+                        key={index}
+                        onClick={() => {
+                          handleNavigate(product.id, product);
+                        }}
+                      >
+                        <TableData>
+                          <TableInfo>
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              width={50}
+                            />
+                            <div>
+                              <h3>{product.symbol}</h3>
+                              <p>{product.name}</p>
+                            </div>
+                          </TableInfo>
+                        </TableData>
+                        <TablePrice>
+                          {currencyType(type)}{" "}
+                          {formatNumber(product.current_price.toFixed(2))}
+                        </TablePrice>
+                        <td>
+                          <TablePercents>
+                            <img
+                              src={isExist ? viewed : unviewed}
+                              width={27}
+                              onClick={() => {
+                                navigate(`/crypto/${product.id}`);
                               }}
-                              {...item}
-                              />
+                            />
+                            <p>
+                              {percents > 0 ? (
+                                <p style={{ color: "#0ECB81" }}>+{percents}%</p>
+                              ) : (
+                                <p style={{ color: "#ff0000" }}>{percents}%</p>
+                              )}
+                            </p>
+                          </TablePercents>
+                        </td>
+                        <TablePrice>
+                          {currencyType(type)}{" "}
+                          {formatNumber(
+                            product.market_cap.toString().slice(0, -6)
                           )}
-                          />
-                </Stack>
+                          M
+                        </TablePrice>
+                      </TableRow>
+                    );
+                  })}
+            </tbody>
+          </TableWrapper>
+          <Footer>
+            <Stack spacing={2}>
+              <Pagination
+                count={10}
+                onChange={handleChange}
+                renderItem={(item) => (
+                  <PaginationS
+                    {...item}
+                  />
+                )}
+              />
+            </Stack>
           </Footer>
         </Wrapper>
       </Container>
