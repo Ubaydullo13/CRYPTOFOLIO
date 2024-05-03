@@ -279,9 +279,9 @@ function Table({ data, fetchData }) {
                             />
                             <p>
                               {percents > 0 ? (
-                                <p style={{ color: "#0ECB81" }}>+{percents}%</p>
+                                <span style={{ color: "#0ECB81" }}>+{percents}%</span>
                               ) : (
-                                <p style={{ color: "#ff0000" }}>{percents}%</p>
+                                <span style={{ color: "#ff0000" }}>{percents}%</span>
                               )}
                             </p>
                           </TablePercents>
